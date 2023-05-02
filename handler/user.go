@@ -52,4 +52,29 @@ func (h *userHandler) Login(c *gin.Context) {
 	5. di dalam service, mencari dgn bantuan repository user dengan email
 	6. mencocokan password*/
 
+	var input user.LoginInput
+
+	err := c.ShouldBind(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	loggedInUser, err := h.userService.Login(input)
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	formatter := user.FormatUser(loggedInUser, "token123")
+
+	response := helper.APIResponse("Successfully logged in", http.StatusOK, "succes", formatter)
+	c.JSON(http.StatusOK, response)
 }
