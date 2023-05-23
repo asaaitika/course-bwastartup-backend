@@ -15,6 +15,7 @@ type Campaign struct {
 	BackerCount      int
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
+	CampaignImages   []CampaignImages
 }
 
 type CampaignImages struct {
