@@ -36,6 +36,21 @@ func main() {
 	campaignService := campaign.NewService(campaignRepository)
 	authService := auth.NewService()
 
+	input := campaign.CreateCampaignInput{}
+	input.Name = "Penggalangan Dana Kanker"
+	input.ShortDescription = "short"
+	input.Description = "longgggg"
+	input.GoalAmount = 100000000
+	input.Perks = "hadiah satu, hadiah dua, hadiah 3"
+
+	inputUser, _ := userService.GetUserById(14)
+	input.User = inputUser
+
+	_, err = campaignService.CreateCampaign(input)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	userHandler := handler.NewUserHandler(userService, authService)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 
