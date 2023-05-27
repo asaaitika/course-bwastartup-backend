@@ -3,6 +3,9 @@ package transaction
 import (
 	"course-bwastartup-backend/campaign"
 	"errors"
+	"fmt"
+
+	"github.com/gosimple/slug"
 )
 
 type service struct {
@@ -13,6 +16,7 @@ type service struct {
 type Service interface {
 	GetTransactionByCampaignId(input GetCampaignTransactionInput) ([]Transaction, error)
 	GetTransactionByUserId(userId int) ([]Transaction, error)
+	CreateTransaction(input CreateTransactionInput) (Transaction, error)
 }
 
 func NewService(repository Repository, campaignRepository campaign.Repository) *service {
@@ -44,4 +48,23 @@ func (s *service) GetTransactionByUserId(userId int) ([]Transaction, error) {
 	}
 
 	return transactions, nil
+}
+
+func (s *service) CreateTransaction(input CreateTransactionInput) (Transaction, error) {
+	transaction := Transaction{}
+	transaction.CampaignId = input.CampaignId
+	transaction.Amount = input.Amount
+	transaction.UserId = input.User.ID
+	transaction.Status = "pending"
+
+	codeCandidate := fmt.Sprintf("ORDER %d000", input.User.ID)
+	transaction.Code = slug.Make(codeCandidate)
+	// transaction.Code = "ORDER-10001"
+
+	newTransactions, err := s.repository.Save(transaction)
+	if err != nil {
+		return newTransactions, err
+	}
+
+	return newTransactions, nil
 }
