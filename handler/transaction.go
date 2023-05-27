@@ -68,3 +68,30 @@ func (h *transactionHandler) GetUserTransaction(c *gin.Context) {
 /*1. 	ada inputan dari user dgn memasukkan nilai atau amount dan nanti ditangkap oleh handler dan dimapping input struct
 2. di dalam handler, memanggil service utk membuat transaksi dan memanggil repo utk create transaction
 3. di service perlu memanggil service midtrans utk mendaftarkan transaksinya*/
+
+func (h *transactionHandler) CreateTransaction(c *gin.Context) {
+	var input transaction.CreateTransactionInput
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Failed to create transaction", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	currentUser := c.MustGet("currentUser").(user.User)
+	input.User = currentUser
+
+	newTransactions, err := h.service.CreateTransaction(input)
+	if err != nil {
+		response := helper.APIResponse("Failed to create transaction", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.APIResponse("Success to create transaction", http.StatusOK, "success", newTransactions)
+	c.JSON(http.StatusOK, response)
+}
