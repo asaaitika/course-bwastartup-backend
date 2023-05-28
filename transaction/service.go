@@ -2,15 +2,14 @@ package transaction
 
 import (
 	"course-bwastartup-backend/campaign"
+	"course-bwastartup-backend/payment"
 	"errors"
-	"fmt"
-
-	"github.com/gosimple/slug"
 )
 
 type service struct {
 	repository         Repository
 	campaignRepository campaign.Repository
+	paymentService     payment.Service
 }
 
 type Service interface {
@@ -19,9 +18,13 @@ type Service interface {
 	CreateTransaction(input CreateTransactionInput) (Transaction, error)
 }
 
-func NewService(repository Repository, campaignRepository campaign.Repository) *service { //,paidService paid.Service)
-	return &service{repository, campaignRepository} //, paidService}
+func NewService(repository Repository, campaignRepository campaign.Repository, paymentService payment.Service) *service {
+	return &service{repository, campaignRepository, paymentService}
 }
+
+// func NewService(repository Repository, campaignRepository campaign.Repository) *service {
+// 	return &service{repository, campaignRepository}
+// }
 
 func (s *service) GetTransactionByCampaignId(input GetCampaignTransactionInput) ([]Transaction, error) {
 	campaign, err := s.campaignRepository.FindByID(input.Id)
@@ -57,11 +60,28 @@ func (s *service) CreateTransaction(input CreateTransactionInput) (Transaction, 
 	transaction.UserId = input.User.ID
 	transaction.Status = "pending"
 
-	codeCandidate := fmt.Sprintf("ORDER %d000", input.User.ID)
-	transaction.Code = slug.Make(codeCandidate)
-	// transaction.Code = "ORDER-10001"
+	// codeCandidate := fmt.Sprintf("ORDER %d000", input.User.ID)
+	// transaction.Code = slug.Make(codeCandidate)
+	// transaction.Code = ""
 
 	newTransactions, err := s.repository.Save(transaction)
+	if err != nil {
+		return newTransactions, err
+	}
+
+	paymentTransaction := payment.Transaction{
+		Id:     newTransactions.Id,
+		Amount: newTransactions.Amount,
+	}
+
+	paymentURL, err := s.paymentService.GetPaymentURL(paymentTransaction, input.User)
+	if err != nil {
+		return newTransactions, err
+	}
+
+	newTransactions.PaymentURL = paymentURL
+
+	newTransactions, err = s.repository.Update(newTransactions)
 	if err != nil {
 		return newTransactions, err
 	}
