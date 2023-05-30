@@ -1,0 +1,4 @@
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/asaaitik/api-bwastartup.asaaitika.my.id
+    - /usr/bin/rsync -Paz * $DEPLOYPATH --delete
