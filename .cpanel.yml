@@ -1,0 +1,5 @@
+---
+deployment:
+tasks:
+  - export DEPLOYPATH=/home/asaaitika/api-bwastartup.asaaitika.my.id
+  - /bin/cp -r * $DEPLOYPATH
